@@ -155,9 +155,11 @@ fi
 
 # ─── 5. Удалённая отправка (опционально) ─────────────────────────────────────
 if [ -n "${REMOTE_HOST:-}" ] && have scp; then
-  log "Отправляю на $REMOTE_HOST:${REMOTE_PATH:-/} через scp"
-  mkdir -p "${REMOTE_PATH:-/root/backups}"
-  scp -o ConnectTimeout=30 "$ARCHIVE" "$ARCHIVE.sha256" "$REMOTE_HOST:${REMOTE_PATH:-/root/backups}/"
+  REMOTE_PATH="${REMOTE_PATH:-/root/backups}"
+  log "Отправляю на $REMOTE_HOST:$REMOTE_PATH через scp"
+  # mkdir — на УДАЛЁННОМ хосте (иначе scp упадёт, если папки там нет)
+  ssh -o ConnectTimeout=30 "$REMOTE_HOST" "mkdir -p '$REMOTE_PATH'"
+  scp -o ConnectTimeout=30 "$ARCHIVE" "$ARCHIVE.sha256" "$REMOTE_HOST:$REMOTE_PATH/"
   log "Отправлено"
 elif [ "${PUSH_S3:-0}" = "1" ] && have rclone; then
   log "Отправляю в S3: ${S3_BUCKET}/${S3_PREFIX:-} через rclone"
